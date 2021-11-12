@@ -18,6 +18,11 @@ bool buttonStateB = 0;
 void A(void);
 void B(void);
 
+/**
+ * Setup.
+ *
+ * @return None.
+ */
 void setup() {
     Serial.begin(9600);
     Serial.println("starting...");
@@ -33,6 +38,11 @@ void setup() {
     radio.setPALevel(RF24_PA_MIN);
 }
 
+/**
+ * Loop.
+ *
+ * @return None.
+ */
 void loop() {
     //MASTER ? A() : B();
     
@@ -45,6 +55,11 @@ void loop() {
     }   
 }
 
+/**
+ * A.
+ *
+ * @return None.
+ */
 void A() {
     delay(5);
 
@@ -65,6 +80,11 @@ void A() {
     digitalWrite(LED_PIN, buttonStateA);
 }
 
+/**
+ * B.
+ *
+ * @return None.
+ */
 void B() {
     delay(5);
 
