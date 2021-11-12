@@ -6,7 +6,7 @@
 #define BUTTON_PIN 3
 #define LED_PIN 10
 
-#define MASTER 1
+#define MASTER 1  // 1 = A, 0 = B
 
 RF24 radio(7, 8);  // CE, CSN
 
@@ -32,8 +32,8 @@ void setup() {
 
     radio.begin();
 
-    radio.openWritingPipe(addresses[MASTER ? 0 : 1]);
-    radio.openReadingPipe(1, addresses[MASTER ? 1 : 0]);
+    radio.openWritingPipe(addresses[MASTER ? 1 : 0]);
+    radio.openReadingPipe(1, addresses[MASTER ? 0 : 1]);
 
     radio.setPALevel(RF24_PA_MIN);
 }
@@ -43,14 +43,12 @@ void setup() {
  *
  * @return None.
  */
-void loop() {
-    //MASTER ? A() : B();
-    
+void loop() {    
     if (MASTER) {
-        Serial.println("MASTER I");
+        Serial.println("MASTER I (A)");
         A();
     } else {
-        Serial.println("MASTER II");
+        Serial.println("MASTER II (B)");
         B();
     }   
 }
@@ -74,9 +72,12 @@ void A() {
 
         radio.startListening();
 
-        while (!radio.available());
+        while (!radio.available()) {
+            Serial.println("radio no available.");
+        };
 
         radio.read(&buttonStateB, sizeof(buttonStateB));
+        Serial.println((String)"other button state: " + buttonStateB);
 
         digitalWrite(LED_PIN, buttonStateB);
     }
@@ -94,8 +95,11 @@ void B() {
         radio.startListening();
 
         if (radio.available()) {
+            
+            Serial.println((String)"other button state: " + buttonStateB);
 
             radio.read(&buttonStateA, sizeof(buttonStateA));
+            Serial.println((String)"other button state: " + buttonStateA);
             
             digitalWrite(LED_PIN, buttonStateA);
 
@@ -106,6 +110,8 @@ void B() {
             buttonStateB = digitalRead(buttonStateB);
 
             radio.write(&buttonStateB, sizeof(buttonStateB));
+        } else {
+            Serial.println("radio not available.");
         }
     }
 }
