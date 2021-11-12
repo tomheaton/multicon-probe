@@ -6,7 +6,7 @@
 #define BUTTON_PIN 3
 #define LED_PIN 10
 
-#define MASTER 0
+#define MASTER 1
 
 RF24 radio(7, 8);  // CE, CSN
 
@@ -61,23 +61,25 @@ void loop() {
  * @return None.
  */
 void A() {
-    delay(5);
+    while (true) {
+        delay(5);
 
-    radio.stopListening();
+        radio.stopListening();
 
-    buttonStateA = digitalRead(BUTTON_PIN);
+        buttonStateA = digitalRead(BUTTON_PIN);
 
-    radio.write(&buttonStateA, sizeof(buttonStateA));
+        radio.write(&buttonStateA, sizeof(buttonStateA));
 
-    delay(5);
+        delay(5);
 
-    radio.startListening();
+        radio.startListening();
 
-    while (!radio.available());
+        while (!radio.available());
 
-    radio.read(&buttonStateB, sizeof(buttonStateB));
+        radio.read(&buttonStateB, sizeof(buttonStateB));
 
-    digitalWrite(LED_PIN, buttonStateA);
+        digitalWrite(LED_PIN, buttonStateB);
+    }
 }
 
 /**
@@ -86,22 +88,24 @@ void A() {
  * @return None.
  */
 void B() {
-    delay(5);
-
-    radio.startListening();
-
-    if (radio.available()) {
-
-        radio.read(&buttonStateA, sizeof(buttonStateA));
-        
-        digitalWrite(LED_PIN, buttonStateA);
-
+    while (true) {
         delay(5);
 
-        radio.stopListening();
+        radio.startListening();
 
-        buttonStateB = digitalRead(buttonStateB);
+        if (radio.available()) {
 
-        radio.write(&buttonStateB, sizeof(buttonStateB));
+            radio.read(&buttonStateA, sizeof(buttonStateA));
+            
+            digitalWrite(LED_PIN, buttonStateA);
+
+            delay(5);
+
+            radio.stopListening();
+
+            buttonStateB = digitalRead(buttonStateB);
+
+            radio.write(&buttonStateB, sizeof(buttonStateB));
+        }
     }
 }
