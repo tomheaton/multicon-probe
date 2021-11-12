@@ -34,7 +34,15 @@ void setup() {
 }
 
 void loop() {
-    MASTER ? A() : B();
+    //MASTER ? A() : B();
+    
+    if (MASTER) {
+        Serial.println("MASTER I");
+        A();
+    } else {
+        Serial.println("MASTER II");
+        B();
+    }   
 }
 
 void A() {
