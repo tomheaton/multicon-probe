@@ -1,22 +1,28 @@
 #include <Arduino.h>
 #include <SPI.h>
-#include <nRF24L01.h>
-#include <RF24.h>
+#include <NRFLite.h>
 
 #define BUTTON_PIN 3
 #define LED_PIN 10
+#define CE_PIN 5
+#define CSN_PIN 6
 
-#define MASTER 1  // 1 = A, 0 = B
-
-RF24 radio(7, 8);  // CE, CSN
-
-const byte addresses[][6] = {"00001", "00002"};
+#define RADIO_ID 0  // 0 = Transmitter, 1 = Receiver
 
 bool buttonStateA = 0;
 bool buttonStateB = 0;
 
-void A(void);
-void B(void);
+struct RadioPacket {
+    uint8_t FromRadioId;
+    uint32_t OnTimeMillis;
+    uint32_t FailedTxCount;
+};
+
+NRFLite _radio;
+RadioPacket _radioData;
+
+void Zero(void);
+void One(void);
 
 /**
  * Setup.
@@ -30,12 +36,12 @@ void setup() {
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     pinMode(LED_PIN, OUTPUT);
 
-    radio.begin();
-
-    radio.openWritingPipe(addresses[MASTER ? 1 : 0]);
-    radio.openReadingPipe(1, addresses[MASTER ? 0 : 1]);
-
-    radio.setPALevel(RF24_PA_MIN);
+    if (!_radio.init(RADIO_ID, CE_PIN, CSN_PIN)) {
+        Serial.println("Cannot communicate with radio");
+        while (true);
+    }
+    
+    _radioData.FromRadioId = RADIO_ID;
 }
 
 /**
@@ -44,74 +50,59 @@ void setup() {
  * @return None.
  */
 void loop() {    
-    if (MASTER) {
-        Serial.println("MASTER I (A)");
-        A();
+    if (RADIO_ID == 0) {
+        Serial.println("RADIO Zero");
+        Zero();
     } else {
-        Serial.println("MASTER II (B)");
-        B();
+        Serial.println("RADIO One");
+        One();
     }   
 }
 
 /**
- * A.
+ * Radio Zero .
  *
  * @return None.
  */
-void A() {
+void Zero() {
     while (true) {
-        delay(5);
+        _radioData.OnTimeMillis = millis();
 
-        radio.stopListening();
+        Serial.print("Sending ");
+        Serial.print(_radioData.OnTimeMillis);
+        Serial.print(" ms");
+        
+        if (_radio.send(RADIO_ID, &_radioData, sizeof(_radioData))) {
+            Serial.println("...Success");
+        }
+        else {
+            Serial.println("...Failed");
+            _radioData.FailedTxCount++;
+        }
 
-        buttonStateA = digitalRead(BUTTON_PIN);
-
-        radio.write(&buttonStateA, sizeof(buttonStateA));
-
-        delay(5);
-
-        radio.startListening();
-
-        while (!radio.available()) {
-            Serial.println("radio no available.");
-        };
-
-        radio.read(&buttonStateB, sizeof(buttonStateB));
-        Serial.println((String)"other button state: " + buttonStateB);
-
-        digitalWrite(LED_PIN, buttonStateB);
+        delay(1000);
     }
 }
 
 /**
- * B.
+ * Radio One
  *
  * @return None.
  */
-void B() {
+void One() {
     while (true) {
-        delay(5);
+        while (_radio.hasData()) {
+            _radio.readData(&_radioData);
 
-        radio.startListening();
+            String msg = "Radio ";
+            msg += _radioData.FromRadioId;
+            msg += ", ";
+            msg += _radioData.OnTimeMillis;
+            msg += " ms, ";
+            msg += _radioData.FailedTxCount;
+            msg += " Failed TX";
 
-        if (radio.available()) {
-            
-            Serial.println((String)"other button state: " + buttonStateB);
-
-            radio.read(&buttonStateA, sizeof(buttonStateA));
-            Serial.println((String)"other button state: " + buttonStateA);
-            
-            digitalWrite(LED_PIN, buttonStateA);
-
-            delay(5);
-
-            radio.stopListening();
-
-            buttonStateB = digitalRead(buttonStateB);
-
-            radio.write(&buttonStateB, sizeof(buttonStateB));
-        } else {
-            Serial.println("radio not available.");
+            Serial.println(msg);
         }
     }
 }
