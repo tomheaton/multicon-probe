@@ -50,11 +50,11 @@ void setup() {
  * @return None.
  */
 void loop() {    
-    if (RADIO_ID == 0) {
-        Serial.println("RADIO Zero");
+    Serial.println((String)"Radio" + RADIO_ID);
+
+    if (RADIO_ID == 0) {        
         Zero();
     } else {
-        Serial.println("RADIO One");
         One();
     }   
 }
@@ -68,14 +68,11 @@ void Zero() {
     while (true) {
         _radioData.OnTimeMillis = millis();
 
-        Serial.print("Sending ");
-        Serial.print(_radioData.OnTimeMillis);
-        Serial.print(" ms");
+        Serial.println((String)"Sending " + _radioData.OnTimeMillis + " ms");
         
         if (_radio.send(RADIO_ID, &_radioData, sizeof(_radioData))) {
             Serial.println("...Success");
-        }
-        else {
+        } else {
             Serial.println("...Failed");
             _radioData.FailedTxCount++;
         }
