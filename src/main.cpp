@@ -9,8 +9,8 @@
 
 #define RADIO_ID 0  // 0 = Transmitter, 1 = Receiver
 
-bool buttonStateA = 0;
-bool buttonStateB = 0;
+bool buttonStateZero = 0;
+bool buttonStateOne = 0;
 
 struct RadioPacket {
     uint8_t FromRadioId;
@@ -31,7 +31,7 @@ void One(void);
  */
 void setup() {
     Serial.begin(9600);
-    Serial.println("starting...");
+    Serial.println("Starting Radio...");
 
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     pinMode(LED_PIN, OUTPUT);
@@ -59,8 +59,10 @@ void loop() {
     }   
 }
 
+// TODO: rework id's etc.
+
 /**
- * Radio Zero .
+ * Radio Zero. (Transmitter)
  *
  * @return None.
  */
@@ -70,7 +72,7 @@ void Zero() {
 
         Serial.println((String)"Sending " + _radioData.OnTimeMillis + " ms");
         
-        if (_radio.send(RADIO_ID, &_radioData, sizeof(_radioData))) {
+        if (_radio.send(RADIO_ID == 1 ? 0 : 1, &_radioData, sizeof(_radioData))) {
             Serial.println("...Success");
         } else {
             Serial.println("...Failed");
@@ -82,7 +84,7 @@ void Zero() {
 }
 
 /**
- * Radio One
+ * Radio One. (Receiver Transmitter)
  *
  * @return None.
  */
